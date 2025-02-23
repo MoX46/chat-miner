@@ -18,6 +18,7 @@ from wordcloud import STOPWORDS, WordCloud
 
 def sunburst(
     df,
+    year=None,
     color="C0",
     edgecolor="black",
     linewidth=0.5,
@@ -33,13 +34,32 @@ def sunburst(
     if authors:
         df = df.filter(pl.col("author").is_in(authors))
 
+    if year:
+            available_years = df["timestamp"].dt.year().unique().to_list()
+            if year not in available_years:
+                raise ValueError(
+                    f"No messages in year {year}. Available years: {available_years}"
+                )
+            df = df.filter(pl.col("timestamp").dt.year() == year)
+
     df = df.with_columns(hour=pl.col("timestamp").dt.hour())
     df_circle = (
         df.group_by("hour")
         .agg(pl.col("message").count().alias("message_count"))
         .sort("hour")
     )
-    df_circle = df_circle.with_columns(rad=pl.col("hour") * 2 / 24 * np.pi + np.pi / 24)
+    
+    df = df.with_columns(rad=pl.col("timestamp").dt.hour() * 2 * np.pi / 24 + np.pi / 24)
+
+    full_hours = pl.DataFrame({
+        "hour": np.arange(24),
+        "rad": np.arange(24) * 2 * np.pi / 24 + np.pi / 24  # Ensure correct radians
+    })
+
+    df_circle = full_hours.join(df_circle, on="hour", how="left").fill_null(0)
+
+    full_hours = pl.DataFrame({"hour": np.arange(24)})
+    df_circle = full_hours.join(df_circle, on="hour", how="left").fill_null(0)
 
     if ax is None:
         _, ax = plt.subplots(subplot_kw={"projection": "polar"})
@@ -73,7 +93,7 @@ def sunburst(
 
     ax.bar(
         df_circle["rad"],
-        df_circle["message_count"].max() * np.ones(24),
+        np.full(len(df_circle), df_circle["message_count"].max()),
         width=2 * np.pi / 24,
         alpha=0.1,
         bottom=0,

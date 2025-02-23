@@ -78,6 +78,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb
 
 # IPython
 profile_default/
@@ -154,3 +155,5 @@ cython_debug/
 
 # VScode
 .vscode/
+
+data
