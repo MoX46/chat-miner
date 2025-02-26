@@ -133,12 +133,12 @@ def wordcloud(
         df = pl.from_pandas(df)
 
     if year:
-            available_years = df["timestamp"].dt.year().unique().to_list()
-            if year not in available_years:
-                raise ValueError(
-                    f"No messages in year {year}. Available years: {available_years}"
-                )
-            df = df.filter(pl.col("timestamp").dt.year() == year)
+        available_years = df["timestamp"].dt.year().unique().to_list()
+        if year not in available_years:
+            raise ValueError(
+                f"No messages in year {year}. Available years: {available_years}"
+            )
+        df = df.filter(pl.col("timestamp").dt.year() == year)
 
     if authors:
         df = df.filter(pl.col("author").is_in(authors))
